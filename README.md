@@ -1,56 +1,39 @@
-# Welcome to your Expo app 👋
+# 3putt
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A mobile app for scoring golf games with friends — strokes, stableford and side games — built with Expo and React Native for iOS and Android.
 
-## Get started
+## Features
 
-1. Install dependencies
+- **Courses** — save courses for reuse: 9 or 18 holes, par and stroke index per hole, and multiple tees (Blue, White, Red, …) each with its own course rating and slope.
+- **Players** — save your regular group with their handicap index (plus handicaps supported as `+2`).
+- **Rounds** — pick a course, tee and players. Playing handicaps are calculated automatically with the WHS formula: `index × (slope ÷ 113) + (rating − par)`.
+- **Score entry** — one simple screen per hole. Enter each player's strokes and their stableford points appear instantly (handicap strokes are allocated by stroke index).
+- **Games** — every round scores strokes and stableford; optionally add:
+  - **Best Ball** — 2 v 2 match play. Each hole goes to the team whose best player scored the most stableford points, with an optional *second player tiebreaker* for drawn holes. Live match status (e.g. "Ben & Sam 2 UP").
+  - **Wolf** — award each player 0–6 points per hole, cumulative total.
+  - **Sixes** — same 0–6 points per hole, cumulative total.
+- **Live leaderboard** — switch between score entry and the leaderboard mid-round: gross strokes, score to par, stableford points, holes played, and game standings.
 
-   ```bash
-   npm install
-   ```
+Everything is stored on-device (AsyncStorage) — no account or connection needed.
 
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Running
 
 ```bash
-npm run reset-project
+npm install
+npx expo start        # then press i for iOS simulator, a for Android
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Development
 
-### Other setup steps
+```bash
+npx tsc --noEmit                      # typecheck
+npx expo lint                         # lint
+node --test src/lib/golf.test.ts      # scoring engine unit tests
+```
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+### Structure
 
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- `src/lib/golf.ts` — all scoring math: playing handicap, stroke allocation, stableford, Best Ball match engine
+- `src/store/useStore.ts` — persisted zustand store (courses, players, rounds)
+- `src/app/` — expo-router screens: tabs (Rounds / Courses / Players), course editor, round setup, live round
+- `src/components/` — course form, score entry, leaderboard, shared UI kit
