@@ -3,10 +3,13 @@ import type { HoleInfo, Round, RoundPlayer, TeamId, Tee } from '../types';
 /**
  * WHS course (playing) handicap:
  *   Handicap Index × (Slope ÷ 113) + (Course Rating − Par), rounded to nearest.
+ * Players always enter their normal (18-hole) Handicap Index; for a 9-hole
+ * course WHS uses half of it, alongside the 9-hole course rating and par.
  */
 export function playingHandicap(handicapIndex: number, tee: Tee, holes: HoleInfo[]): number {
   const par = holes.reduce((sum, h) => sum + h.par, 0);
-  return Math.round(handicapIndex * (tee.slopeRating / 113) + (tee.courseRating - par));
+  const index = holes.length === 9 ? handicapIndex / 2 : handicapIndex;
+  return Math.round(index * (tee.slopeRating / 113) + (tee.courseRating - par));
 }
 
 /**

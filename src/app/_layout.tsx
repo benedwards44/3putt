@@ -25,7 +25,7 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={navTheme}>
-      <Stack>
+      <Stack screenOptions={{ headerBackTitle: 'Back' }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="course/new" options={{ title: 'New Course', presentation: 'modal' }} />
         <Stack.Screen name="course/[id]" options={{ title: 'Edit Course' }} />

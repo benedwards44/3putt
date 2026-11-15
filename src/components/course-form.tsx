@@ -33,9 +33,12 @@ const defaultHoles = (count: number): HoleInfo[] =>
 export function CourseForm({
   initial,
   onSave,
+  onDelete,
 }: {
   initial?: Course;
   onSave: (course: Omit<Course, 'id'>) => void;
+  /** Shown as a "Delete Course" button when editing an existing course. */
+  onDelete?: () => void;
 }) {
   const t = useTheme();
   const [name, setName] = useState(initial?.name ?? '');
@@ -60,7 +63,7 @@ export function CourseForm({
       const swatch = TEE_COLORS[prev.length % TEE_COLORS.length];
       return [
         ...prev,
-        { id: makeId(), name: swatch.name, color: swatch.color, courseRating: 72, slopeRating: 113 },
+        { id: makeId(), name: swatch.name, color: swatch.color, courseRating: holes.length === 9 ? 36 : 72, slopeRating: 113 },
       ];
     });
 
@@ -113,7 +116,7 @@ export function CourseForm({
               </Text>
             ) : null}
             {tees.map((tee) => (
-              <TeeEditor key={tee.id} tee={tee} onChange={(patch) => updateTee(tee.id, patch)} onRemove={() => removeTee(tee.id)} />
+              <TeeEditor key={tee.id} tee={tee} holeCount={holes.length} onChange={(patch) => updateTee(tee.id, patch)} onRemove={() => removeTee(tee.id)} />
             ))}
           </View>
 
@@ -152,6 +155,7 @@ export function CourseForm({
           </View>
 
           <Button title={initial ? 'Save Changes' : 'Save Course'} onPress={save} />
+          {onDelete ? <Button title="Delete Course" icon="trash-outline" variant="danger" onPress={onDelete} /> : null}
         </ScrollView>
       </KeyboardAvoidingView>
     </Screen>
@@ -232,14 +236,18 @@ function NumberInput({
 
 function TeeEditor({
   tee,
+  holeCount,
   onChange,
   onRemove,
 }: {
   tee: Tee;
+  holeCount: number;
   onChange: (patch: Partial<Tee>) => void;
   onRemove: () => void;
 }) {
   const t = useTheme();
+  // 9-hole course ratings are roughly half an 18-hole rating (typically ~30–40).
+  const [ratingMin, ratingMax] = holeCount === 9 ? [25, 45] : [50, 90];
   return (
     <Card style={{ gap: Spacing.two }}>
       <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
@@ -256,7 +264,7 @@ function TeeEditor({
       <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: Spacing.three }}>
         <View style={{ gap: 6 }}>
           <FieldLabel text="Course rating" />
-          <NumberInput value={tee.courseRating} min={50} max={90} allowDecimal width={80} onChange={(courseRating) => onChange({ courseRating })} />
+          <NumberInput value={tee.courseRating} min={ratingMin} max={ratingMax} allowDecimal width={80} onChange={(courseRating) => onChange({ courseRating })} />
         </View>
         <View style={{ gap: 6 }}>
           <FieldLabel text="Slope" />

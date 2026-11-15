@@ -27,6 +27,16 @@ test('playing handicap follows WHS formula', () => {
   assert.equal(playingHandicap(-2, std, holes18), -2);
 });
 
+test('playing handicap halves the 18-hole index on a 9-hole course', () => {
+  const holes9 = holes18.slice(0, 9); // par 36
+  const tee: Tee = { id: 't', name: 'White', color: '#fff', courseRating: 35, slopeRating: 120 };
+  // (20 ÷ 2) × (120/113) + (35 − 36) = 10.62 − 1 = 9.62 → 10
+  assert.equal(playingHandicap(20, tee, holes9), 10);
+  const std: Tee = { id: 't', name: 'W', color: '#fff', courseRating: 36, slopeRating: 113 };
+  assert.equal(playingHandicap(0, std, holes9), 0);
+  assert.equal(playingHandicap(-2, std, holes9), -1);
+});
+
 test('strokes received allocates by stroke index', () => {
   // 13 handicap: 1 stroke on SI 1..13, none on 14..18
   assert.equal(strokesReceived(13, 1), 1);

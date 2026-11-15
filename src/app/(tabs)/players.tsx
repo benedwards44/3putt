@@ -45,8 +45,17 @@ export default function PlayersScreen() {
   const confirmDelete = (player: Player) =>
     Alert.alert('Delete player?', `${player.name} will be removed. Past rounds keep their scores.`, [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => deletePlayer(player.id) },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () => {
+          if (editing === player.id) setEditing(null);
+          deletePlayer(player.id);
+        },
+      },
     ]);
+
+  const editingPlayer = players.find((p) => p.id === editing);
 
   return (
     <Screen>
@@ -69,6 +78,14 @@ export default function PlayersScreen() {
                 <Button title="Cancel" variant="secondary" onPress={() => setEditing(null)} style={{ flex: 1 }} />
                 <Button title="Save" onPress={save} style={{ flex: 1 }} />
               </View>
+              {editingPlayer ? (
+                <Button
+                  title="Delete Player"
+                  icon="trash-outline"
+                  variant="danger"
+                  onPress={() => confirmDelete(editingPlayer)}
+                />
+              ) : null}
             </Card>
           ) : null
         }
