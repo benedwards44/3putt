@@ -8,7 +8,7 @@
     "scheme": "threeputt",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "bundleIdentifier": "com.benedwards44.3putt",
+      "bundleIdentifier": "com.cubs.3putt",
       "appleTeamId": "7466T7JYJN",
       "infoPlist": {
         "CFBundleDisplayName": "3 Putt"
@@ -28,6 +28,7 @@
     },
     "plugins": [
       "./plugins/with-android-app-name",
+      "./plugins/with-ios-build-fixes",
       "expo-router",
       [
         "expo-splash-screen",
@@ -36,7 +37,10 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 140
         }
-      ]
+      ],
+      "expo-image",
+      "expo-status-bar",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,

@@ -17,7 +17,8 @@ npx expo run:ios --device           # build and install on a cabled iPhone (need
 ```
 
 - `ios/` and `android/` are generated and gitignored, so never edit them by hand. Native config belongs in `app.json` or a config plugin in `plugins/`.
-- iOS signing: bundle ID `com.benedwards44.3putt`, Apple team ID set in `app.json`.
+- iOS signing: bundle ID `com.cubs.3putt`, Apple team ID set in `app.json`. Changing the bundle ID installs a separate app, and the old one's saved data doesn't carry over.
+- `plugins/with-ios-build-fixes.js` makes iOS builds work with Expo SDK 57 + Xcode 27. It builds Expo modules from source, because the precompiled `ExpoModulesWorklets` crashes at launch with "Library not loaded: @rpath/React.framework/React". It also raises any pod's iOS deployment target below the app's up to match. Keep it unless a later Expo release fixes both problems.
 
 ## Layout
 
