@@ -12,6 +12,18 @@ export function playingHandicap(handicapIndex: number, tee: Tee, holes: HoleInfo
   return Math.round(index * (tee.slopeRating / 113) + (tee.courseRating - par));
 }
 
+/** The tee a player is playing from, falling back to the round's tee for older rounds. */
+export function playerTee(round: Round, player: RoundPlayer): { id: string; name: string; color: string } {
+  return player.teeId
+    ? { id: player.teeId, name: player.teeName ?? round.teeName, color: player.teeColor ?? round.teeColor }
+    : { id: round.teeId, name: round.teeName, color: round.teeColor };
+}
+
+/** True when players in the round are playing from more than one tee. */
+export function hasMixedTees(round: Round): boolean {
+  return new Set(round.players.map((p) => playerTee(round, p).id)).size > 1;
+}
+
 /**
  * Strokes received on a hole given a playing handicap and the hole's stroke index.
  * A 24-handicap gets 2 strokes on SI 1-6 and 1 stroke elsewhere. Plus handicaps

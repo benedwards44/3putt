@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { Alert, Pressable, ScrollView, Switch, Text, View } from 'react-native';
 
 import { Badge, Button, Card, Chip, FieldLabel, Screen } from '@/components/ui';
@@ -27,18 +27,30 @@ export default function NewRoundScreen() {
   const [courseId, setCourseId] = useState(courses[0]?.id ?? '');
   const course = courses.find((c) => c.id === courseId);
   const [teeId, setTeeId] = useState(course?.tees[0]?.id ?? '');
+  /** playerId -> teeId for players not on the default tee */
+  const [playerTees, setPlayerTees] = useState<Record<string, string>>({});
   const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
   const [game, setGame] = useState<GameType>('none');
   const [teams, setTeams] = useState<Record<string, TeamId>>({});
   const [tiebreaker, setTiebreaker] = useState(true);
 
   const tee = course?.tees.find((x) => x.id === teeId) ?? course?.tees[0];
+  const teeFor = (pid: string) => course?.tees.find((x) => x.id === playerTees[pid]) ?? tee;
 
   const selectCourse = (id: string) => {
     setCourseId(id);
     const c = courses.find((x) => x.id === id);
     setTeeId(c?.tees[0]?.id ?? '');
+    setPlayerTees({});
   };
+
+  const setPlayerTee = (pid: string, id: string) =>
+    setPlayerTees((prev) => {
+      const next = { ...prev };
+      if (id === tee?.id) delete next[pid];
+      else next[pid] = id;
+      return next;
+    });
 
   const togglePlayer = (id: string) =>
     setSelectedPlayers((prev) => (prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]));
@@ -46,15 +58,15 @@ export default function NewRoundScreen() {
   const cycleTeam = (id: string) =>
     setTeams((prev) => ({ ...prev, [id]: prev[id] === 'A' ? 'B' : 'A' }));
 
-  const handicaps = useMemo(() => {
-    if (!course || !tee) return {};
-    return Object.fromEntries(
-      selectedPlayers.map((pid) => {
-        const p = players.find((pl) => pl.id === pid)!;
-        return [pid, playingHandicap(p.handicapIndex, tee, course.holes)];
-      })
-    );
-  }, [course, tee, selectedPlayers, players]);
+  // React Compiler memoizes this; no useMemo needed.
+  const handicaps: Record<string, number> = {};
+  if (course) {
+    for (const pid of selectedPlayers) {
+      const p = players.find((pl) => pl.id === pid);
+      const playerTee = teeFor(pid);
+      if (p && playerTee) handicaps[pid] = playingHandicap(p.handicapIndex, playerTee, course.holes);
+    }
+  }
 
   const start = () => {
     if (!course || !tee) return Alert.alert('Select a course and tee');
@@ -68,6 +80,7 @@ export default function NewRoundScreen() {
       course,
       teeId: tee.id,
       playerIds: selectedPlayers,
+      playerTees,
       game,
       secondPlayerTiebreaker: game === 'bestBall' ? tiebreaker : false,
       teams: Object.fromEntries(selectedPlayers.map((p) => [p, teams[p] ?? 'A'])),
@@ -90,7 +103,7 @@ export default function NewRoundScreen() {
 
         {course ? (
           <View style={{ gap: Spacing.two }}>
-            <FieldLabel text="Tee" />
+            <FieldLabel text={course.tees.length > 1 ? 'Tee (default for all players)' : 'Tee'} />
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {course.tees.map((x) => (
                 <Chip
@@ -109,16 +122,17 @@ export default function NewRoundScreen() {
           <FieldLabel text="Players" />
           {players.map((p) => {
             const selected = selectedPlayers.includes(p.id);
+            const showTees = selected && course && course.tees.length > 1;
             return (
-              <Pressable key={p.id} onPress={() => togglePlayer(p.id)}>
-                <Card
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    paddingVertical: 12,
-                    borderColor: selected ? t.tint : t.border,
-                    borderWidth: 1,
-                  }}>
+              <Card
+                key={p.id}
+                style={{
+                  paddingVertical: 12,
+                  gap: 10,
+                  borderColor: selected ? t.tint : t.border,
+                  borderWidth: 1,
+                }}>
+                <Pressable onPress={() => togglePlayer(p.id)} style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <View style={{ flex: 1 }}>
                     <Text style={{ color: t.text, fontWeight: '700', fontSize: 15 }}>{p.name}</Text>
                     <Text style={{ color: t.textSecondary, fontSize: 12 }}>
@@ -128,8 +142,21 @@ export default function NewRoundScreen() {
                   {selected && handicaps[p.id] != null ? (
                     <Badge text={`Plays off ${handicaps[p.id]}`} />
                   ) : null}
-                </Card>
-              </Pressable>
+                </Pressable>
+                {showTees ? (
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                    {course.tees.map((x) => (
+                      <Chip
+                        key={x.id}
+                        label={x.name}
+                        dot={x.color}
+                        selected={x.id === teeFor(p.id)?.id}
+                        onPress={() => setPlayerTee(p.id, x.id)}
+                      />
+                    ))}
+                  </View>
+                ) : null}
+              </Card>
             );
           })}
         </View>

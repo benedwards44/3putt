@@ -8,8 +8,11 @@ import type { Course, GameType, Player, Round, TeamId } from '@/types';
 
 export interface NewRoundInput {
   course: Course;
+  /** Default tee for the round */
   teeId: string;
   playerIds: string[];
+  /** playerId -> teeId, for players not on the default tee */
+  playerTees: Record<string, string>;
   game: GameType;
   secondPlayerTiebreaker: boolean;
   /** playerId -> team, required for Best Ball */
@@ -62,17 +65,22 @@ export const useStore = create<AppState>()(
       deletePlayer: (id) => set((s) => ({ players: s.players.filter((p) => p.id !== id) })),
 
       createRound: (input) => {
-        const { course, teeId, playerIds, game, secondPlayerTiebreaker, teams } = input;
+        const { course, teeId, playerIds, playerTees, game, secondPlayerTiebreaker, teams } = input;
         const tee = course.tees.find((t) => t.id === teeId)!;
+        const teeFor = (pid: string) => course.tees.find((t) => t.id === playerTees[pid]) ?? tee;
         const id = makeId();
         const players = playerIds.map((pid) => {
           const p = get().players.find((pl) => pl.id === pid)!;
+          const playerTee = teeFor(pid);
           return {
             playerId: p.id,
             name: p.name,
             handicapIndex: p.handicapIndex,
-            playingHandicap: playingHandicap(p.handicapIndex, tee, course.holes),
+            playingHandicap: playingHandicap(p.handicapIndex, playerTee, course.holes),
             team: game === 'bestBall' ? teams[pid] : undefined,
+            teeId: playerTee.id,
+            teeName: playerTee.name,
+            teeColor: playerTee.color,
           };
         });
         const emptyScores = () =>

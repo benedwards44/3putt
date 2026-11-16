@@ -6,8 +6,10 @@ import { Badge, Button, Card, Divider, Screen, Stepper } from '@/components/ui';
 import { Radius, Spacing } from '@/constants/theme';
 import {
   bestBallState,
+  hasMixedTees,
   holeStableford,
   matchStatusLabel,
+  playerTee,
   strokesReceived,
 } from '@/lib/golf';
 import { useTheme } from '@/hooks/use-theme';
@@ -16,6 +18,7 @@ import { Round } from '@/types';
 
 export function RoundScore({ round }: { round: Round }) {
   const t = useTheme();
+  const mixedTees = hasMixedTees(round);
   const setStroke = useStore((s) => s.setStroke);
   const setGamePoints = useStore((s) => s.setGamePoints);
   const setFinished = useStore((s) => s.setFinished);
@@ -114,6 +117,7 @@ export function RoundScore({ round }: { round: Round }) {
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                       <Text style={{ color: t.textSecondary, fontSize: 12 }}>
                         Plays off {player.playingHandicap}
+                        {mixedTees ? ` · ${playerTee(round, player).name}` : ''}
                       </Text>
                       {received !== 0 ? <StrokeDots count={received} /> : null}
                     </View>

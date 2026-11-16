@@ -4,6 +4,8 @@ import { test } from 'node:test';
 import {
   bestBallState,
   matchStatusLabel,
+  hasMixedTees,
+  playerTee,
   playingHandicap,
   stablefordPoints,
   strokesReceived,
@@ -170,4 +172,19 @@ test('best ball: running diff accumulates across holes', () => {
   assert.deepEqual(s.holeResults, ['A', 'B', 'draw']);
   assert.deepEqual(s.runningDiff, [1, 0, 0]);
   assert.equal(matchStatusLabel(s.diff), 'All Square');
+});
+
+test('per-player tees fall back to the round tee for older rounds', () => {
+  const base = {
+    id: 'r', startedAt: '', courseId: 'c', courseName: 'C', teeId: 'w', teeName: 'White', teeColor: '#fff',
+    holes: holes18, game: 'none' as const, secondPlayerTiebreaker: false, strokes: {}, gamePoints: {}, finished: false,
+  };
+  const legacy: RoundPlayer = { playerId: 'a', name: 'A', handicapIndex: 10, playingHandicap: 10 };
+  const red: RoundPlayer = { ...legacy, playerId: 'b', teeId: 'r', teeName: 'Red', teeColor: '#f00' };
+  const sameTees: Round = { ...base, players: [legacy, { ...legacy, playerId: 'c', teeId: 'w', teeName: 'White' }] };
+  const mixed: Round = { ...base, players: [legacy, red] };
+  assert.equal(playerTee(mixed, legacy).name, 'White');
+  assert.equal(playerTee(mixed, red).name, 'Red');
+  assert.equal(hasMixedTees(sameTees), false);
+  assert.equal(hasMixedTees(mixed), true);
 });

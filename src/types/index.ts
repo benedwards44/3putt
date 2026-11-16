@@ -41,6 +41,13 @@ export interface RoundPlayer {
   playingHandicap: number;
   /** Only set for Best Ball */
   team?: TeamId;
+  /**
+   * The tee this player plays from. Missing on rounds saved before per-player
+   * tees existed — fall back to the round's tee (see `playerTee` in lib/golf).
+   */
+  teeId?: string;
+  teeName?: string;
+  teeColor?: string;
 }
 
 export interface Round {
@@ -49,6 +56,7 @@ export interface Round {
   startedAt: string;
   courseId: string;
   courseName: string;
+  /** Default tee for the round; individual players may play from other tees */
   teeId: string;
   teeName: string;
   teeColor: string;

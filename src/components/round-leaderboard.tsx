@@ -5,8 +5,10 @@ import { Card, Divider, Screen } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import {
   bestBallState,
+  hasMixedTees,
   matchStatusLabel,
   parForHolesPlayed,
+  playerTee,
   playerTotals,
   toParLabel,
 } from '@/lib/golf';
@@ -16,6 +18,7 @@ import { GAME_LABELS, Round } from '@/types';
 export function RoundLeaderboard({ round }: { round: Round }) {
   const t = useTheme();
   const isPointsGame = round.game === 'wolf' || round.game === 'sixes';
+  const mixedTees = hasMixedTees(round);
 
   const totals = round.players
     .map((p) => ({ player: p, ...playerTotals(round, p) }))
@@ -106,6 +109,7 @@ export function RoundLeaderboard({ round }: { round: Round }) {
                       </Text>
                       <Text style={{ color: t.textSecondary, fontSize: 11 }}>
                         Plays off {row.player.playingHandicap}
+                        {mixedTees ? ` · ${playerTee(round, row.player).name} tees` : ''}
                       </Text>
                     </View>
                   </View>
@@ -154,7 +158,7 @@ export function RoundLeaderboard({ round }: { round: Round }) {
         </Card>
 
         <Text style={{ color: t.textSecondary, fontSize: 12, textAlign: 'center', marginTop: 4 }}>
-          {GAME_LABELS[round.game]} · {round.courseName} · {round.teeName} tees
+          {GAME_LABELS[round.game]} · {round.courseName} · {mixedTees ? 'Mixed' : round.teeName} tees
         </Text>
       </ScrollView>
     </Screen>
