@@ -27,7 +27,9 @@ import { makeId } from '@/lib/id';
 import { useTheme } from '@/hooks/use-theme';
 import { Course, HoleInfo, Tee } from '@/types';
 
-const defaultHoles = (count: number): HoleInfo[] =>
+const isStandardTeeName = (name: string) => TEE_COLORS.some((swatch) => swatch.name === name);
+
+const defaultHoles =(count: number): HoleInfo[] =>
   Array.from({ length: count }, (_, i) => ({ number: i + 1, par: 4, strokeIndex: i + 1 }));
 
 export function CourseForm({
@@ -75,11 +77,16 @@ export function CourseForm({
   const save = () => {
     if (!name.trim()) return Alert.alert('Course name required');
     if (tees.length === 0) return Alert.alert('Add at least one tee', 'A tee needs a course rating and slope so playing handicaps can be calculated.');
+    const teeNames = tees.map((tee) => tee.name.trim());
+    if (teeNames.some((n) => !n)) return Alert.alert('Tee name required', 'Give each custom tee a name, e.g. "Back Combo".');
+    if (new Set(teeNames.map((n) => n.toLowerCase())).size !== teeNames.length) {
+      return Alert.alert('Duplicate tee names', 'Each tee on a course needs a different name.');
+    }
     const siSet = new Set(holes.map((h) => h.strokeIndex));
     if (siSet.size !== holes.length) {
       return Alert.alert('Duplicate stroke indexes', 'Each hole needs a unique stroke index so handicap strokes are allocated correctly.');
     }
-    onSave({ name: name.trim(), holes, tees });
+    onSave({ name: name.trim(), holes, tees: tees.map((tee) => ({ ...tee, name: tee.name.trim() })) });
   };
 
   const par = holes.reduce((s, h) => s + h.par, 0);
@@ -248,6 +255,8 @@ function TeeEditor({
   const t = useTheme();
   // 9-hole course ratings are roughly half an 18-hole rating (typically ~30–40).
   const [ratingMin, ratingMax] = holeCount === 9 ? [25, 45] : [50, 90];
+  // A tee is "custom" when its name isn't one of the standard swatch names (e.g. "Back Combo").
+  const [custom, setCustom] = useState(() => !isStandardTeeName(tee.name));
   return (
     <Card style={{ gap: Spacing.two }}>
       <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
@@ -256,11 +265,72 @@ function TeeEditor({
             key={swatch.name}
             label={swatch.name}
             dot={swatch.color}
-            selected={tee.name === swatch.name}
-            onPress={() => onChange({ name: swatch.name, color: swatch.color })}
+            selected={!custom && tee.name === swatch.name}
+            onPress={() => {
+              setCustom(false);
+              onChange({ name: swatch.name, color: swatch.color });
+            }}
           />
         ))}
+        <Chip
+          label="Custom"
+          selected={custom}
+          onPress={() => {
+            if (custom) return;
+            setCustom(true);
+            onChange({ name: '' });
+          }}
+        />
       </View>
+      {custom ? (
+        <View style={{ gap: Spacing.two }}>
+          <TextField
+            label="Tee name"
+            value={tee.name}
+            onChangeText={(name) => onChange({ name })}
+            placeholder="e.g. Back Combo"
+            autoCapitalize="words"
+            autoFocus={!tee.name}
+            maxLength={30}
+          />
+          <View style={{ gap: 6 }}>
+            <FieldLabel text="Colour" />
+            <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap' }}>
+              {TEE_COLORS.map((swatch) => {
+                const selected = tee.color === swatch.color;
+                return (
+                  <Pressable
+                    key={swatch.color}
+                    onPress={() => onChange({ color: swatch.color })}
+                    hitSlop={4}
+                    accessibilityLabel={`${swatch.name} colour`}
+                    accessibilityState={{ selected }}
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 16,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderWidth: 2,
+                      borderColor: selected ? t.tint : 'transparent',
+                    }}>
+                    <View
+                      style={{
+                        width: 24,
+                        height: 24,
+                        borderRadius: 12,
+                        backgroundColor: swatch.color,
+                        borderWidth: StyleSheet.hairlineWidth,
+                        borderColor: t.border,
+                      }}
+                    />
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+        </View>
+      ) : null}
       <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: Spacing.three }}>
         <View style={{ gap: 6 }}>
           <FieldLabel text="Course rating" />
